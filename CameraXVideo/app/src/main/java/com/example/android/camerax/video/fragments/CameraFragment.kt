@@ -68,16 +68,9 @@ class CameraFragment : Fragment() {
         Navigation.findNavController(requireActivity(), R.id.fragment_container)
     }
 
-    private val cameraCapabilities = mutableListOf<CameraCapability>()
-
     private lateinit var videoCapture: VideoCapture<Recorder>
     private var activeRecording: ActiveRecording? = null
     private lateinit var recordingState:VideoRecordEvent
-
-    /// Camera UI inputs
-    private var cameraIndex = 0
-    private var qualitySelectorIndex = DEFAULT_QUALITY_SELECTOR_IDX
-    private var audioEnabled = false
 
     private val mainThreadExecutor by lazy { ContextCompat.getMainExecutor(requireContext()) }
     private var enumerationDeferred:Deferred<Unit>? = null
@@ -92,21 +85,21 @@ class CameraFragment : Fragment() {
             val cameraProvider = ProcessCameraProvider.getInstance(requireContext()).await()
 
             val cameraSelector = CameraSelector.Builder()
-                .requireLensFacing(getCameraLensFacing(cameraIndex))
+                .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
                 .build()
             val preview = Preview.Builder().setTargetAspectRatio(DEFAULT_ASPECT_RATIO)
                 .build().apply {
                     setSurfaceProvider(fragmentCameraBinding.previewView.surfaceProvider)
                 }
 
-            // create the user required QualitySelector (video resolution): we know this is
-            // supported, a valid qualitySelector will be created.
-            val qualitySelector = QualitySelector.of(
-                cameraCapabilities[cameraIndex].selector[qualitySelectorIndex])
+            val qualitySelector = QualitySelector
+                .firstTry(QualitySelector.QUALITY_UHD)
+                .thenTry(QualitySelector.QUALITY_FHD)
+                .thenTry(QualitySelector.QUALITY_HD)
+                .finallyTry(QualitySelector.QUALITY_SD,
+                    QualitySelector.FALLBACK_STRATEGY_LOWER)
 
-            // build a recorder, which can:
-            //   - record video/audio to MediaStore(only use here), File, ParcelFileDescriptor
-            //   - be used create recording(s) (the recording performs recording)
+
             val recorder = Recorder.Builder()
                 .setQualitySelector(qualitySelector)
                 .build()
@@ -158,7 +151,7 @@ class CameraFragment : Fragment() {
                     mainThreadExecutor,
                     captureListener
                )
-               .apply { if (audioEnabled) withAudioEnabled() }
+               .withAudioEnabled()
                .start()
 
         Log.i(TAG, "Recording started")
@@ -175,55 +168,7 @@ class CameraFragment : Fragment() {
         updateUI(event)
 
         if (event is VideoRecordEvent.Finalize) {
-            showVideo(event)
-        }
-    }
-
-    /**
-     * Retrieve the asked camera's type(lens facing type). In this sample, only 2 types:
-     *   idx is even number:  CameraSelector.LENS_FACING_BACK
-     *          odd number:   CameraSelector.LENS_FACING_FRONT
-     */
-    private fun getCameraLensFacing(idx: Int) : Int {
-        if (cameraCapabilities.size == 0) {
-            Log.i(TAG, "Error: This device does not have any camera, bailing out")
-            requireActivity().finish()
-        }
-        return (cameraCapabilities[idx % cameraCapabilities.size].lensFacing)
-    }
-
-    /**
-     * Query and cache for the platform's camera capabilities
-     * The function is destructive as it unbinds all already bound use cases
-     */
-    data class CameraCapability(var lensFacing:Int, var selector:List<Int>)
-    init {
-        enumerationDeferred = lifecycleScope.async {
-            whenCreated {
-                val provider = ProcessCameraProvider.getInstance(requireContext()).await()
-
-                provider.unbindAll()
-                for (lens in arrayOf(CameraSelector.LENS_FACING_BACK, CameraSelector.LENS_FACING_FRONT)){
-                    val cameraSelector = CameraSelector.Builder().requireLensFacing(lens).build()
-                    try {
-                        // just want to get the camera.cameraInfo to query capabilities
-                        // we are not binding anything here.
-                        if (provider.hasCamera(cameraSelector)) {
-                            val camera = provider.bindToLifecycle(requireParentFragment(), cameraSelector)
-                            val qualityCap = QualitySelector.getSupportedQualities(camera.cameraInfo)
-                                .filter { quality ->
-                                    listOf(QualitySelector.QUALITY_UHD,
-                                        QualitySelector.QUALITY_FHD,
-                                        QualitySelector.QUALITY_HD,
-                                    ).contains(quality)
-                                }
-                            cameraCapabilities.add(CameraCapability(lens, qualityCap))
-                        }
-                    } catch (exc: java.lang.Exception) {
-                        Log.e(TAG, "Camera Face $lens is not supported")
-                    }
-                }
-            }
+            //showVideo(event)
         }
     }
 
@@ -234,22 +179,6 @@ class CameraFragment : Fragment() {
      */
     @SuppressLint("ClickableViewAccessibility", "MissingPermission")
     private fun initializeUI() {
-        fragmentCameraBinding.cameraButton.setOnClickListener{
-            cameraIndex = (cameraIndex + 1) % cameraCapabilities.size
-            // camera device change is instant:
-            //   - preview needs to be restarted
-            //   - qualitySelector selection is invalidated
-            //   - camera selector UI need to update
-            qualitySelectorIndex = DEFAULT_QUALITY_SELECTOR_IDX
-            initializeQualitySectionsUI()
-            bindCaptureUsecase()
-        }
-
-        fragmentCameraBinding.audioSelection.isChecked = audioEnabled
-        fragmentCameraBinding.audioSelection.setOnClickListener {
-            audioEnabled = fragmentCameraBinding.audioSelection.isChecked
-        }
-
         // React to user touching the capture button
         fragmentCameraBinding.captureButton.setOnClickListener {
             if (!this::recordingState.isInitialized || recordingState is VideoRecordEvent.Finalize) {
@@ -257,22 +186,6 @@ class CameraFragment : Fragment() {
                 fragmentCameraBinding.stopButton.visibility = View.VISIBLE
                 enableUI(false)
                 startRecording()
-            } else {
-                when (recordingState) {
-                    is VideoRecordEvent.Start -> {
-                        activeRecording?.pause()
-                        fragmentCameraBinding.stopButton.visibility = View.VISIBLE
-                    }
-                    is VideoRecordEvent.Pause -> {
-                        activeRecording?.resume()
-                    }
-                    is VideoRecordEvent.Resume -> {
-                        activeRecording?.pause()
-                    }
-                    else -> {
-                        Log.e(TAG, "Unknown State ($recordingState) when Capture Button is pressed ")
-                    }
-                }
             }
         }
         fragmentCameraBinding.stopButton.setOnClickListener {
@@ -319,12 +232,6 @@ class CameraFragment : Fragment() {
                     fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
                     fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
                 }
-                is VideoRecordEvent.Pause -> {
-                    fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_resume)
-                }
-                is VideoRecordEvent.Resume -> {
-                    fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
-                }
                 else -> {
                     Log.e(TAG, "Error(Unknown Event) from Recorder")
                     return
@@ -348,14 +255,8 @@ class CameraFragment : Fragment() {
      *    Once recording is started, need to disable able UI to avoid conflict.
      */
     private fun enableUI(enable: Boolean) {
-        fragmentCameraBinding.cameraButton.isEnabled = enable
         fragmentCameraBinding.captureButton.isEnabled = enable
         fragmentCameraBinding.stopButton.isEnabled = enable
-
-        // Hide the audio and the quality selector list
-       val visible = if (!enable) View.INVISIBLE else View.VISIBLE
-            fragmentCameraBinding.audioSelection.visibility = visible
-            fragmentCameraBinding.qualitySelection.visibility = visible
     }
 
     /**
@@ -371,66 +272,6 @@ class CameraFragment : Fragment() {
             fragmentCameraBinding.captureStatus.text = "Capture system reset due to binding failure," +
                 "\nyou could retry with new settings."
             bindCaptureUsecase()
-        }
-    }
-
-    /**
-     *  initializeQualitySectionsUI():
-     *    Populate a ListView to display camera capabilities, one front, and one back facing
-     *    which has been enumerated into:
-     *       cameraCapabilities.
-     *    User selection is saved to qualitySelectorIndex, used later in bind capture pipeline phase.
-     */
-    private fun initializeQualitySectionsUI() {
-        val selectorStrings = cameraCapabilities[cameraIndex].selector.map {
-            qualityMap.getString(it)
-        }
-        // Assign adapter to ListView
-        fragmentCameraBinding.qualitySelection.adapter =
-        object : ArrayAdapter<String?>(
-            requireContext(),
-            android.R.layout.simple_list_item_1, android.R.id.text1, selectorStrings)
-        {
-            override fun getView(position: Int, tvView: View?, parent: ViewGroup): View {
-                return (super.getView(position, tvView, parent) as TextView)
-                  .apply { setTextColor(ContextCompat.getColor(requireContext(), R.color.ic_white)) }
-            }
-        }
-
-        val previousSelection = intArrayOf(-1)
-        val previousView = arrayOf<View?>(null)
-        fragmentCameraBinding.qualitySelection.setOnItemClickListener { _, view, position, _ ->
-            if (previousView[0] != null) {
-                previousView[0]!!.setBackgroundColor(0x00000000)
-            }
-            view.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.icPressed))
-            previousSelection[0] = position
-            previousView[0] = view
-
-            // cache the current quality selection index
-            if (qualitySelectorIndex != position) {
-                qualitySelectorIndex = position
-                bindCaptureUsecase()   //  rebind the capture use case
-            }
-        }
-    }
-
-    /**
-     * Display capture the video in MediaStore
-     *     event: VideoRecordEvent.Finalize holding MediaStore URI
-     */
-    private fun showVideo(event: VideoRecordEvent) {
-
-        if (event !is VideoRecordEvent.Finalize) {
-            return
-        }
-
-        lifecycleScope.launch(Dispatchers.Main) {
-            navController.navigate(
-                CameraFragmentDirections.actionCameraFragmentToVideoViewer(
-                    event.outputResults.outputUri
-                )
-            )
         }
     }
 
@@ -453,7 +294,6 @@ class CameraFragment : Fragment() {
                 enumerationDeferred = null
             }
             initializeUI()
-            initializeQualitySectionsUI()
             bindCaptureUsecase()
         }
     }
@@ -463,42 +303,9 @@ class CameraFragment : Fragment() {
     }
 
     companion object {
-        // default QualitySelector if no input from UI
-        const val DEFAULT_QUALITY_SELECTOR_IDX = 0
         const val DEFAULT_ASPECT_RATIO = AspectRatio.RATIO_16_9
         val TAG:String = CameraFragment::class.java.simpleName
-        private val qualityMap = QualityMap()
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-    }
-}
-
-/**
- * a helper class mapping QualitySelector.value <--> its string
- */
-internal class QualityMap {
-    private val qualityToString = mapOf(
-        QualitySelector.QUALITY_UHD to "QUALITY_UHD(2160p)",
-        QualitySelector.QUALITY_FHD to "QUALITY_FHD(1080p)",
-        QualitySelector.QUALITY_HD to "QUALITY_HD(720p)",
-        QualitySelector.QUALITY_SD to "QUALITY_SD(480p)"
-    )
-    private val stringToQuality = qualityToString.map { Pair(it.value, it.key) }.toMap()
-
-    fun getString(key:Int) :String {
-        return try {
-            qualityToString[key]!!
-        } catch (exc: java.lang.Exception) {
-            Log.e(CameraFragment.TAG, "QualitySelector $Int is NOT supported")
-            "Not Supported"
-        }
-    }
-    fun getKey(description : String) : Int {
-        return try {
-            stringToQuality[description]!!
-        } catch (exc: java.lang.Exception) {
-            Log.e(CameraFragment.TAG, "Quality $description is NOT supported")
-            -1
-        }
     }
 }
 
