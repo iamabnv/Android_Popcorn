@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "165757444706",
+    "firebase_url": "https://takes-staging.firebaseio.com",
+    "project_id": "takes-staging",
+    "storage_bucket": "takes-staging.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165757444706:android:eecba82ba648a1eeb4273b",
+        "android_client_info": {
+          "package_name": "co.snckbrk.popcorn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "165757444706-uc91q0cuqkojptapbonkhb568o5jgacf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "co.snckbrk.popcorn",
+            "certificate_hash": "e0f3f1a2d29c91b0981ab166b551f3d5cf321ace"
+          }
+        },
+        {
+          "client_id": "165757444706-37s3mb6hfj1594mq5gfb0f6sq8klsrp4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJAaWJ785XVn8k0u_qOgF8mI5L987C8Os"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "165757444706-37s3mb6hfj1594mq5gfb0f6sq8klsrp4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "165757444706-em4ule6dfb31gvr90nnobgqkm76drjq5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "co.snckbrk.Takes-dev",
+                "app_store_id": "1539175761"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -54,6 +54,8 @@ import androidx.concurrent.futures.await
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
 import androidx.lifecycle.whenCreated
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
 import java.util.*
 
@@ -294,6 +296,9 @@ class CameraFragment : Fragment() {
                 enumerationDeferred = null
             }
             initializeUI()
+            val auth = Firebase.auth
+            val crnt = auth.currentUser
+            fragmentCameraBinding.textView2?.text = crnt?.displayName
             bindCaptureUsecase()
         }
     }

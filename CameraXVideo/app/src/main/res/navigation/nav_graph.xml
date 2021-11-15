@@ -25,11 +25,12 @@
         android:id="@+id/permissions_fragment"
         android:name="com.example.android.camerax.video.fragments.PermissionsFragment"
         android:label="Permissions" >
-
+        <action
+            android:id="@+id/action_permissions_fragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
         <action
             android:id="@+id/action_permissions_fragment_to_camera_fragment"
             app:destination="@id/camera_fragment" />
-
     </fragment>
 
     <fragment
@@ -38,13 +39,11 @@
         android:label="Camera" >
 
         <action
-            android:id="@+id/action_camera_to_permissions"
-            app:destination="@id/permissions_fragment"
-            app:popUpTo="@id/camera_fragment"
-            app:popUpToInclusive="true"/>
-        <action
             android:id="@+id/action_camera_fragment_to_video_viewer"
             app:destination="@id/video_viewer" />
+        <action
+            android:id="@+id/action_camera_fragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
 
     </fragment>
     <fragment
@@ -59,6 +58,15 @@
 
         <action
             android:id="@+id/action_video_viewer2_to_camera_fragment"
+            app:destination="@id/camera_fragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.android.camerax.video.LoginFragment"
+        android:label="fragment_login"
+        tools:layout="@layout/fragment_login" >
+        <action
+            android:id="@+id/action_loginFragment_to_camera_fragment"
             app:destination="@id/camera_fragment" />
     </fragment>
 

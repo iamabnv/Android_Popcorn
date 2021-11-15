@@ -13,18 +13,39 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="256" />
-                            <option name="y" value="12" />
+                            <option name="x" value="186" />
+                            <option name="y" value="58" />
                           </Point>
                         </option>
                         <option name="myPositions">
                           <map>
+                            <entry key="action_camera_fragment_to_loginFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_camera_fragment_to_video_viewer">
                               <value>
                                 <LayoutPositions />
                               </value>
                             </entry>
-                            <entry key="action_camera_to_permissions">
+                          </map>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                  <entry key="loginFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="-49" />
+                            <option name="y" value="7" />
+                          </Point>
+                        </option>
+                        <option name="myPositions">
+                          <map>
+                            <entry key="action_loginFragment_to_camera_fragment">
                               <value>
                                 <LayoutPositions />
                               </value>
@@ -39,13 +60,13 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="12" />
-                            <option name="y" value="12" />
+                            <option name="x" value="-293" />
+                            <option name="y" value="41" />
                           </Point>
                         </option>
                         <option name="myPositions">
                           <map>
-                            <entry key="action_permissions_fragment_to_camera_fragment">
+                            <entry key="action_permissions_fragment_to_loginFragment">
                               <value>
                                 <LayoutPositions />
                               </value>
