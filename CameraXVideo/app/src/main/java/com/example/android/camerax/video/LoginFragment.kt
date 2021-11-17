@@ -8,7 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.navigation.Navigation
+import com.android.volley.Request
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -17,6 +17,17 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+
+import com.android.volley.toolbox.JsonObjectRequest
+
+import com.android.volley.toolbox.Volley
+
+import com.android.volley.Response
+import org.json.JSONException
+import org.json.JSONObject
+import com.android.volley.AuthFailureError
+import com.google.firebase.auth.FirebaseUser
+import java.io.UnsupportedEncodingException
 
 
 class LoginFragment : Fragment() {
@@ -49,9 +60,11 @@ class LoginFragment : Fragment() {
         super.onStart()
         val crntUser = auth.currentUser
         if (crntUser != null) {
-            Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
-                LoginFragmentDirections.actionLoginFragmentToCameraFragment()
-            )
+            //Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
+                //LoginFragmentDirections.actionLoginFragmentToCameraFragment()
+            //
+            //volleyGet()
+            volleyPost(crntUser.uid, crntUser)
         }
         loginView.findViewById<Button>(R.id.Login_SignIn).setOnClickListener {
             signIn()
@@ -76,9 +89,11 @@ class LoginFragment : Fragment() {
                     if (task.isSuccessful) {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "signInWithCredential:success")
-                        Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
-                            LoginFragmentDirections.actionLoginFragmentToCameraFragment()
-                        )
+                        //Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
+                          //  LoginFragmentDirections.actionLoginFragmentToCameraFragment()
+                        //)
+                        //volleyGet()
+                        volleyPost(auth.currentUser?.uid, auth.currentUser)
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -86,6 +101,80 @@ class LoginFragment : Fragment() {
                 }
         }
     }
+
+    fun volleyGet() {
+        val url = "https://reqres.in/api/users?page=2"
+        val requestQueue = Volley.newRequestQueue(context)
+        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null, {
+            response ->
+            try {
+                var jsonArray = response.getJSONArray("data")
+                for (i in 0 until jsonArray.length()) {
+                    var jsonObj = jsonArray.getJSONObject(i)
+                    Log.w(TAG, jsonObj.getString("email"))
+                }
+            } catch (e : JSONException) {
+                e.printStackTrace()
+            }
+        }, {
+            error ->  error.printStackTrace()
+        })
+        requestQueue.add(jsonObjectRequest)
+    }
+
+    fun volleyhost(id : String) {
+        val url = "https://api.popcornmeet.com/v1/users/$id/authenticate"
+        val requestQueue = Volley.newRequestQueue(context)
+        val jsonObjectRequest = JsonObjectRequest(Request.Method.POST, url, null, { 
+            response ->  Log.w(TAG, response.toString())
+        }, { 
+            error ->  error.printStackTrace()
+
+        })
+        requestQueue.add(jsonObjectRequest)
+    }
+
+    fun volleyPost(id: String?, usr: FirebaseUser?) {
+        val postUrl = "https://api.popcornmeet.com/v1/users/$id/authenticate"
+        val requestQueue = Volley.newRequestQueue(context)
+        val postData = JSONObject()
+        try {
+            postData.put("authType", "android")
+            postData.put("email", usr?.email)
+            postData.put("photoURL", usr?.photoUrl)
+            postData.put("displayName", usr?.displayName)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+        val reqbod : String = postData.toString()
+        val jsonObjectRequest: JsonObjectRequest = object : JsonObjectRequest(
+            Method.POST, postUrl, null,
+            Response.Listener { response -> Log.w(TAG, response.toString()) },
+            Response.ErrorListener { error -> error.printStackTrace() }) {
+            @Throws(AuthFailureError::class)
+            override fun getHeaders(): Map<String, String> {
+                val headrs =
+                mapOf("x-api-key" to "7dc6cdc72d4ffe57966086235a91c6ee59dffa1f578c7647aa20eb3de5f0f0b7",
+                "Content-Type" to "application/json")
+                return headrs
+            }
+
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            @Throws(AuthFailureError::class)
+            override fun getBody(): ByteArray? {
+                return try {
+                    reqbod.toByteArray(charset("utf-8"))
+                } catch (uee : UnsupportedEncodingException) {
+                    null
+                }
+            }
+        }
+        requestQueue.add(jsonObjectRequest)
+    }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
