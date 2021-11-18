@@ -47,25 +47,18 @@ class PermissionsFragment : Fragment() {
             // Request camera-related permissions
             activityResultLauncher.launch(PERMISSIONS_REQUIRED)
         }
+        else {
+            Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
+                PermissionsFragmentDirections.actionPermissionsFragmentToLoginFragment()
+            )
+        }
     }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return FragmentPermissionBinding.inflate(inflater, container, false).also {
-            it.permissionContainer.setOnClickListener {
-                if (hasPermissions(requireContext())) {
-                    Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
-                        PermissionsFragmentDirections.actionPermissionsFragmentToLoginFragment()
-                    )
-                } else {
-                    Log.e(PermissionsFragment::class.java.simpleName,
-                        "Re-requesting permissions ...")
-                    activityResultLauncher.launch(PERMISSIONS_REQUIRED)
-                }
-            }
-        }.root
+        return FragmentPermissionBinding.inflate(inflater, container, false).root
     }
     companion object {
         /** Convenience method used to check if all permissions required by this app are granted */
@@ -84,6 +77,11 @@ class PermissionsFragment : Fragment() {
             }
             if (!permissionGranted) {
                 Toast.makeText(context, "Permission request denied", Toast.LENGTH_LONG).show()
+            }
+            else {
+                Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
+                    PermissionsFragmentDirections.actionPermissionsFragmentToLoginFragment()
+                )
             }
         }
 }
