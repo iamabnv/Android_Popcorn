@@ -39,26 +39,9 @@
         android:label="Camera" >
 
         <action
-            android:id="@+id/action_camera_fragment_to_video_viewer"
-            app:destination="@id/video_viewer" />
-        <action
             android:id="@+id/action_camera_fragment_to_loginFragment"
             app:destination="@id/loginFragment" />
 
-    </fragment>
-    <fragment
-        android:id="@+id/video_viewer"
-        android:name="com.example.android.camerax.video.fragments.VideoViewerFragment"
-        android:label="fragment_video_viewer"
-        tools:layout="@layout/fragment_video_viewer" >
-
-        <argument
-            android:name="uri"
-            app:argType="android.net.Uri" />
-
-        <action
-            android:id="@+id/action_video_viewer2_to_camera_fragment"
-            app:destination="@id/camera_fragment" />
     </fragment>
     <fragment
         android:id="@+id/loginFragment"
