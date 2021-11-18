@@ -31,8 +31,11 @@ package com.example.android.camerax.video.fragments
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.pm.ActivityInfo
+import android.net.Uri
 import java.text.SimpleDateFormat
 import android.os.Bundle
+import android.os.Environment
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
@@ -54,9 +57,20 @@ import androidx.concurrent.futures.await
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
 import androidx.lifecycle.whenCreated
+import com.android.volley.AuthFailureError
+import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
+import com.example.android.camerax.video.LoginFragment
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.File
+import java.io.UnsupportedEncodingException
 import java.util.*
 
 class CameraFragment : Fragment() {
@@ -64,6 +78,8 @@ class CameraFragment : Fragment() {
     // UI with ViewBinding
     private var _fragmentCameraBinding: FragmentCameraBinding? = null
     private val fragmentCameraBinding get() = _fragmentCameraBinding!!
+
+    private lateinit var userID : String
 
     /** Host's navigation controller */
     private val navController: NavController by lazy {
@@ -136,7 +152,8 @@ class CameraFragment : Fragment() {
         // create MediaStoreOutputOptions for our recorder: resulting our recording!
         val name = "CameraX-recording-" +
             SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-                .format(System.currentTimeMillis()) + ".mp4"
+                .format(System.currentTimeMillis()) + "-raw.mp4"
+        val file : File = File(requireContext().getExternalFilesDir(null), name)
         val contentValues = ContentValues().apply {
             put(MediaStore.Video.Media.DISPLAY_NAME, name)
         }
@@ -145,10 +162,10 @@ class CameraFragment : Fragment() {
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             .setContentValues(contentValues)
             .build()
-
+        val fileoutpuss = FileOutputOptions.Builder(file).build()
         // configure Recorder and Start recording to the mediaStoreOutput.
         activeRecording =
-               videoCapture.output.prepareRecording(requireActivity(), mediaStoreOutput)
+               videoCapture.output.prepareRecording(requireActivity(), fileoutpuss)
                .withEventListener(
                     mainThreadExecutor,
                     captureListener
@@ -170,7 +187,18 @@ class CameraFragment : Fragment() {
         updateUI(event)
 
         if (event is VideoRecordEvent.Finalize) {
-            //showVideo(event)
+            uploadVideo(event.outputResults.outputUri)
+        }
+    }
+
+    private fun uploadVideo(viduri : Uri) {
+        val uploadref = "videos/"+userID+"/"+System.currentTimeMillis()+"-raw.mp4"
+        val storageReference = FirebaseStorage.getInstance()
+            .getReference(uploadref)
+        storageReference.putFile(viduri).addOnCompleteListener {
+            getVidLink(uploadref)
+            Log.w(TAG, it.result.storage.downloadUrl.toString())
+            Toast.makeText(requireContext(), "uploaded video", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -299,9 +327,90 @@ class CameraFragment : Fragment() {
             val auth = Firebase.auth
             val crnt = auth.currentUser
             fragmentCameraBinding.textView2?.text = crnt?.displayName
+            getUserID(crnt?.uid, crnt)
             bindCaptureUsecase()
         }
     }
+
+    fun getUserID(id: String?, usr: FirebaseUser?) {
+        val postUrl = "https://api.popcornmeet.com/v1/users/$id/authenticate"
+        val requestQueue = Volley.newRequestQueue(context)
+        val postData = JSONObject()
+        try {
+            postData.put("authType", "android")
+            postData.put("email", usr?.email)
+            postData.put("photoURL", usr?.photoUrl)
+            postData.put("displayName", usr?.displayName)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+        val reqbod : String = postData.toString()
+        val jsonObjectRequest: JsonObjectRequest = object : JsonObjectRequest(
+            Method.POST, postUrl, null,
+            Response.Listener { response -> userID = response.getString("id")},
+            Response.ErrorListener { error -> error.printStackTrace() }) {
+            @Throws(AuthFailureError::class)
+            override fun getHeaders(): Map<String, String> {
+                val headrs =
+                    mapOf("x-api-key" to "7dc6cdc72d4ffe57966086235a91c6ee59dffa1f578c7647aa20eb3de5f0f0b7",
+                        "Content-Type" to "application/json")
+                return headrs
+            }
+
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            @Throws(AuthFailureError::class)
+            override fun getBody(): ByteArray? {
+                return try {
+                    reqbod.toByteArray(charset("utf-8"))
+                } catch (uee : UnsupportedEncodingException) {
+                    null
+                }
+            }
+        }
+        requestQueue.add(jsonObjectRequest)
+    }
+
+    fun getVidLink(path : String) {
+        val postUrl = "https://api.popcornmeet.com/v1/messages"
+        val requestQueue = Volley.newRequestQueue(context)
+        val postData = JSONObject()
+        try {
+            postData.put("path", path)
+            postData.put("mode", "camera")
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+        val reqbod : String = postData.toString()
+        val jsonObjectRequest: JsonObjectRequest = object : JsonObjectRequest(
+            Method.POST, postUrl, null,
+            Response.Listener { response -> Log.w(TAG, response.getString("watchUrl"))},
+            Response.ErrorListener { error -> error.printStackTrace() }) {
+            @Throws(AuthFailureError::class)
+            override fun getHeaders(): Map<String, String> {
+                val headrs =
+                    mapOf("Content-Type" to "application/json", "Authorization" to "Bearer $userID")
+                return headrs
+            }
+
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            @Throws(AuthFailureError::class)
+            override fun getBody(): ByteArray? {
+                return try {
+                    reqbod.toByteArray(charset("utf-8"))
+                } catch (uee : UnsupportedEncodingException) {
+                    null
+                }
+            }
+        }
+        requestQueue.add(jsonObjectRequest)
+    }
+
     override fun onDestroyView() {
         _fragmentCameraBinding = null
         super.onDestroyView()

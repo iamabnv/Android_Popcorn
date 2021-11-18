@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.navigation.Navigation
 import com.android.volley.Request
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -60,11 +61,11 @@ class LoginFragment : Fragment() {
         super.onStart()
         val crntUser = auth.currentUser
         if (crntUser != null) {
-            //Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
-                //LoginFragmentDirections.actionLoginFragmentToCameraFragment()
-            //
+            Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
+                LoginFragmentDirections.actionLoginFragmentToCameraFragment()
+            )
             //volleyGet()
-            volleyPost(crntUser.uid, crntUser)
+            //volleyPost(crntUser.uid, crntUser)
         }
         loginView.findViewById<Button>(R.id.Login_SignIn).setOnClickListener {
             signIn()
@@ -89,49 +90,17 @@ class LoginFragment : Fragment() {
                     if (task.isSuccessful) {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "signInWithCredential:success")
-                        //Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
-                          //  LoginFragmentDirections.actionLoginFragmentToCameraFragment()
-                        //)
+                        Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
+                            LoginFragmentDirections.actionLoginFragmentToCameraFragment()
+                        )
                         //volleyGet()
-                        volleyPost(auth.currentUser?.uid, auth.currentUser)
+                        //volleyPost(auth.currentUser?.uid, auth.currentUser)
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w(TAG, "signInWithCredential:failure", task.exception)
                     }
                 }
         }
-    }
-
-    fun volleyGet() {
-        val url = "https://reqres.in/api/users?page=2"
-        val requestQueue = Volley.newRequestQueue(context)
-        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null, {
-            response ->
-            try {
-                var jsonArray = response.getJSONArray("data")
-                for (i in 0 until jsonArray.length()) {
-                    var jsonObj = jsonArray.getJSONObject(i)
-                    Log.w(TAG, jsonObj.getString("email"))
-                }
-            } catch (e : JSONException) {
-                e.printStackTrace()
-            }
-        }, {
-            error ->  error.printStackTrace()
-        })
-        requestQueue.add(jsonObjectRequest)
-    }
-
-    fun volleyhost(id : String) {
-        val url = "https://api.popcornmeet.com/v1/users/$id/authenticate"
-        val requestQueue = Volley.newRequestQueue(context)
-        val jsonObjectRequest = JsonObjectRequest(Request.Method.POST, url, null, { 
-            response ->  Log.w(TAG, response.toString())
-        }, { 
-            error ->  error.printStackTrace()
-
-        })
-        requestQueue.add(jsonObjectRequest)
     }
 
     fun volleyPost(id: String?, usr: FirebaseUser?) {
