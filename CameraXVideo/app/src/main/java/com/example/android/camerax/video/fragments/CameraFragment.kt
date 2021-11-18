@@ -30,6 +30,7 @@ package com.example.android.camerax.video.fragments
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import java.text.SimpleDateFormat
@@ -153,15 +154,7 @@ class CameraFragment : Fragment() {
         val name = "CameraX-recording-" +
             SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                 .format(System.currentTimeMillis()) + "-raw.mp4"
-        val file : File = File(requireContext().getExternalFilesDir(null), name)
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, name)
-        }
-        val mediaStoreOutput = MediaStoreOutputOptions.Builder(
-            requireActivity().contentResolver,
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            .setContentValues(contentValues)
-            .build()
+        val file = File(requireContext().getExternalFilesDir(null), name)
         val fileoutpuss = FileOutputOptions.Builder(file).build()
         // configure Recorder and Start recording to the mediaStoreOutput.
         activeRecording =
@@ -197,8 +190,8 @@ class CameraFragment : Fragment() {
             .getReference(uploadref)
         storageReference.putFile(viduri).addOnCompleteListener {
             getVidLink(uploadref)
-            Log.w(TAG, it.result.storage.downloadUrl.toString())
-            Toast.makeText(requireContext(), "uploaded video", Toast.LENGTH_SHORT).show()
+            //Log.w(TAG, it.result.storage.downloadUrl.toString())
+            Toast.makeText(requireContext(), "uploaded video to firebase", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -386,7 +379,14 @@ class CameraFragment : Fragment() {
         val reqbod : String = postData.toString()
         val jsonObjectRequest: JsonObjectRequest = object : JsonObjectRequest(
             Method.POST, postUrl, null,
-            Response.Listener { response -> Log.w(TAG, response.getString("watchUrl"))},
+            Response.Listener { response -> Log.w(TAG, response.getString("watchUrl"))
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, response.getString("watchUrl"))
+                    type = "text/plain"
+                }
+                val shareIntent = Intent.createChooser(sendIntent, null)
+                startActivity(shareIntent)},
             Response.ErrorListener { error -> error.printStackTrace() }) {
             @Throws(AuthFailureError::class)
             override fun getHeaders(): Map<String, String> {
