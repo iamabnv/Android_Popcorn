@@ -30,6 +30,7 @@ package com.example.android.camerax.video.fragments
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.icu.util.TimeUnit
 import android.net.Uri
 import java.text.SimpleDateFormat
 import android.os.Bundle
@@ -50,6 +51,7 @@ import androidx.camera.video.*
 import androidx.concurrent.futures.await
 import androidx.core.content.ContextCompat
 import androidx.core.util.Consumer
+import androidx.navigation.fragment.navArgs
 import com.android.volley.AuthFailureError
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
@@ -64,8 +66,11 @@ import org.json.JSONObject
 import java.io.File
 import java.io.UnsupportedEncodingException
 import java.util.*
+import kotlin.time.seconds
 
 class CameraFragment : Fragment() {
+
+    private val args : CameraFragmentArgs by navArgs()
 
     // UI with ViewBinding
     private var _fragmentCameraBinding: FragmentCameraBinding? = null
@@ -176,8 +181,8 @@ class CameraFragment : Fragment() {
             .getReference(uploadReference)
         storageReference.putFile(videoURI).addOnCompleteListener {
             getVidLink(uploadReference)
-            //Log.w(TAG, it.result.storage.downloadUrl.toString())
-            Toast.makeText(requireContext(), "uploaded video to firebase", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(),
+                "uploaded video to firebase", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -211,7 +216,6 @@ class CameraFragment : Fragment() {
             }
             fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
         }
-        fragmentCameraBinding.captureStatus.text = getString(R.string.Idle)
     }
 
     /**
@@ -236,8 +240,10 @@ class CameraFragment : Fragment() {
                     fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
                     fragmentCameraBinding.captureButton.isEnabled = true
                     fragmentCameraBinding.stopButton.isEnabled = true
+                    fragmentCameraBinding.previewcontainer?.setCardBackgroundColor(resources.getColor(R.color.redRecording))
                 }
                 is VideoRecordEvent.Finalize-> {
+                    fragmentCameraBinding.previewcontainer?.setCardBackgroundColor(resources.getColor(R.color.yellowRecording))
                     fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
                     fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
                 }
@@ -246,16 +252,12 @@ class CameraFragment : Fragment() {
                     return
                 }
         }
-
         val stats = event.recordingStats
-        val size = stats.numBytesRecorded / 1000
-        val time = java.util.concurrent.TimeUnit.NANOSECONDS.toSeconds(stats.recordedDurationNanos)
-        var text = "${state}: recorded ${size}KB, in ${time}second"
-        if(event is VideoRecordEvent.Finalize)
-            text = "${text}\nFile saved to: ${event.outputResults.outputUri}"
-
-        fragmentCameraBinding.captureStatus.text=text
-        Log.i(TAG, "recording event: $text")
+        val min = java.util.concurrent.TimeUnit.NANOSECONDS.toMinutes(stats.recordedDurationNanos)
+        val stmin = if (min < 1) {"0"} else {"$min"}
+        val sec = java.util.concurrent.TimeUnit.NANOSECONDS.toSeconds(stats.recordedDurationNanos)
+        val stsec = if (sec < 10) {"0${sec}"} else {"$sec"}
+        fragmentCameraBinding.textView2?.text = "${stmin}:${stsec}"
     }
 
     /**
@@ -279,8 +281,6 @@ class CameraFragment : Fragment() {
             enableUI(true)
             fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
             fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
-            fragmentCameraBinding.captureStatus.text = "Capture system reset due to binding failure," +
-                "\nyou could retry with new settings."
             bindCaptureUsecase()
         }
     }
@@ -306,51 +306,10 @@ class CameraFragment : Fragment() {
             initializeUI()
             val auth = Firebase.auth
             val currentUser = auth.currentUser
-            fragmentCameraBinding.textView2?.text = currentUser?.displayName
-            getUserID(currentUser)
+            //fragmentCameraBinding.textView2?.text = currentUser?.displayName
+            userID = args.userID
             bindCaptureUsecase()
         }
-    }
-
-    private fun getUserID(usr: FirebaseUser?) {
-        val postUrl = "https://api.popcornmeet.com/v1/users/${usr?.uid}/authenticate"
-        val requestQueue = Volley.newRequestQueue(context)
-        val postData = JSONObject()
-        try {
-            postData.put("authType", "android")
-            postData.put("email", usr?.email)
-            postData.put("photoURL", usr?.photoUrl)
-            postData.put("displayName", usr?.displayName)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
-        val requestBody : String = postData.toString()
-        val jsonObjectRequest: JsonObjectRequest = object : JsonObjectRequest(
-            Method.POST, postUrl, null,
-            Response.Listener { response -> userID = response.getString("id")},
-            Response.ErrorListener { error -> error.printStackTrace() }) {
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): Map<String, String> {
-                return mapOf(
-                    "x-api-key" to "7dc6cdc72d4ffe57966086235a91c6ee59dffa1f578c7647aa20eb3de5f0f0b7",
-                    "Content-Type" to "application/json"
-                )
-            }
-
-            override fun getBodyContentType(): String {
-                return "application/json; charset=utf-8"
-            }
-
-            @Throws(AuthFailureError::class)
-            override fun getBody(): ByteArray? {
-                return try {
-                    requestBody.toByteArray(charset("utf-8"))
-                } catch (uee : UnsupportedEncodingException) {
-                    null
-                }
-            }
-        }
-        requestQueue.add(jsonObjectRequest)
     }
 
     private fun getVidLink(path : String) {

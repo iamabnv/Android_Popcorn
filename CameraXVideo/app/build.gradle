@@ -119,4 +119,6 @@ dependencies {
 
     // If you want to additionally use the CameraX View class
     implementation "androidx.camera:camera-view:1.0.0-alpha30"
+
+    implementation 'com.google.android.material:material:1.5.0-beta01'
 }

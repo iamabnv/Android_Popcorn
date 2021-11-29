@@ -14,8 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
@@ -23,21 +22,18 @@
     android:layout_height="match_parent">
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginStart="64dp"
-        android:layout_marginTop="108dp"
-        android:layout_marginEnd="64dp"
-        android:layout_marginBottom="276dp"
-        app:cardBackgroundColor="#FEC12F"
+        android:id="@+id/previewcontainer"
+        android:layout_width="225dp"
+        android:layout_height="300dp"
+        app:cardBackgroundColor="@color/yellowRecording"
         app:cardCornerRadius="32dp"
         app:cardElevation="8dp"
-        app:contentPadding="16dp"
+        app:contentPadding="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.4">
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -55,28 +51,23 @@
 
     <ImageButton
         android:id="@+id/capture_button"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:layout_gravity="bottom|center"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="128dp"
         android:background="@drawable/ic_start"
         android:contentDescription="@string/capture"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardView"
+        app:layout_constraintTop_toBottomOf="@+id/previewcontainer"
         tools:ignore="ImageContrastCheck" />
 
     <ImageButton
         android:id="@+id/stop_button"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:layout_gravity="bottom|right"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="128dp"
         android:background="@drawable/ic_stop"
         android:contentDescription="@string/stop"
         android:scaleType="fitCenter"
@@ -84,32 +75,20 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardView"
+        app:layout_constraintTop_toBottomOf="@+id/previewcontainer"
         tools:ignore="ImageContrastCheck" />
-
-    <TextView
-        android:id="@+id/capture_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|left"
-        android:background="@color/txTransparent"
-        android:lines="2"
-        android:maxLines="2"
-        android:text="CaptureStatus"
-        android:textColor="@color/txGray"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/capture_button" />
 
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TextView"
-        app:layout_constraintBottom_toTopOf="@+id/cardView"
+        android:fontFamily="@font/montserrat_alternates_bold"
+        android:text="popcorn"
+        android:textSize="34sp"
+        app:layout_constraintBottom_toTopOf="@+id/previewcontainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.8" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

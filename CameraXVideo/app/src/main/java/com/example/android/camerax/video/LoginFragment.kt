@@ -27,6 +27,7 @@ import com.android.volley.Response
 import org.json.JSONException
 import org.json.JSONObject
 import com.android.volley.AuthFailureError
+import com.example.android.camerax.video.fragments.PermissionsFragmentDirections
 import com.google.firebase.auth.FirebaseUser
 import java.io.UnsupportedEncodingException
 
@@ -48,7 +49,6 @@ class LoginFragment : Fragment() {
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(activity, gso)
-
         auth = Firebase.auth
     }
 
@@ -61,11 +61,7 @@ class LoginFragment : Fragment() {
         super.onStart()
         val crntUser = auth.currentUser
         if (crntUser != null) {
-            Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
-                LoginFragmentDirections.actionLoginFragmentToCameraFragment()
-            )
-            //volleyGet()
-            //volleyPost(crntUser.uid, crntUser)
+            volleyPost(crntUser)
         }
         loginView.findViewById<Button>(R.id.Login_SignIn).setOnClickListener {
             signIn()
@@ -88,13 +84,8 @@ class LoginFragment : Fragment() {
             auth.signInWithCredential(credential)
                 .addOnCompleteListener(it) { task ->
                     if (task.isSuccessful) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Log.d(TAG, "signInWithCredential:success")
-                        Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
-                            LoginFragmentDirections.actionLoginFragmentToCameraFragment()
-                        )
-                        //volleyGet()
-                        //volleyPost(auth.currentUser?.uid, auth.currentUser)
+                        val crntUser = auth.currentUser
+                        volleyPost(crntUser)
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -103,8 +94,8 @@ class LoginFragment : Fragment() {
         }
     }
 
-    fun volleyPost(id: String?, usr: FirebaseUser?) {
-        val postUrl = "https://api.popcornmeet.com/v1/users/$id/authenticate"
+    fun volleyPost(usr: FirebaseUser?) {
+        val postUrl = "https://api.popcornmeet.com/v1/users/${usr?.uid}/authenticate"
         val requestQueue = Volley.newRequestQueue(context)
         val postData = JSONObject()
         try {
@@ -118,7 +109,11 @@ class LoginFragment : Fragment() {
         val reqbod : String = postData.toString()
         val jsonObjectRequest: JsonObjectRequest = object : JsonObjectRequest(
             Method.POST, postUrl, null,
-            Response.Listener { response -> Log.w(TAG, response.toString()) },
+            Response.Listener { response ->
+                val id = response.getString("id")
+                Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
+                    LoginFragmentDirections.actionLoginFragmentToCameraFragment(id)
+                )},
             Response.ErrorListener { error -> error.printStackTrace() }) {
             @Throws(AuthFailureError::class)
             override fun getHeaders(): Map<String, String> {
@@ -143,7 +138,6 @@ class LoginFragment : Fragment() {
         }
         requestQueue.add(jsonObjectRequest)
     }
-
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

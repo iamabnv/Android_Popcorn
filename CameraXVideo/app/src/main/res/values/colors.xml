@@ -9,6 +9,8 @@
     <color name="icFocused">#DDFFFFFF</color>
     <color name="icPressed">#AAFFFFFF</color>
     <color name="txBlack">#FF000000</color>
+    <color name="redRecording">#EF204B</color>
+    <color name="yellowRecording">#FEC12F</color>
     <color name="txTransparent">#00000000</color>
     <color name="txBlue">#FF0000FF</color>
     <color name="txGray">#80FFFFFF</color>

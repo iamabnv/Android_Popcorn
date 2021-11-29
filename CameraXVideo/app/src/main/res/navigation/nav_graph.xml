@@ -38,6 +38,10 @@
         android:name="com.example.android.camerax.video.fragments.CameraFragment"
         android:label="Camera" >
 
+        <argument
+            android:name="userID"
+            app:argType="string"/>
+
         <action
             android:id="@+id/action_camera_fragment_to_loginFragment"
             app:destination="@id/loginFragment" />
