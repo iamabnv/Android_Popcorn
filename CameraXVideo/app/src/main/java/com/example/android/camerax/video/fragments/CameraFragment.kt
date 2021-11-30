@@ -196,14 +196,16 @@ class CameraFragment : Fragment() {
         // React to user touching the capture button
         fragmentCameraBinding.captureButton.setOnClickListener {
             if (!this::recordingState.isInitialized || recordingState is VideoRecordEvent.Finalize) {
-                fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
+                //fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
                 fragmentCameraBinding.stopButton.visibility = View.VISIBLE
+                fragmentCameraBinding.captureButton.visibility = View.INVISIBLE
                 enableUI(false)
                 startRecording()
             }
         }
         fragmentCameraBinding.stopButton.setOnClickListener {
             // stopping
+            fragmentCameraBinding.captureButton.visibility = View.VISIBLE
             fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
             if (activeRecording == null || recordingState is VideoRecordEvent.Finalize) {
                 return@setOnClickListener
@@ -214,7 +216,6 @@ class CameraFragment : Fragment() {
                 recording.stop()
                 activeRecording = null
             }
-            fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
         }
     }
 
@@ -237,14 +238,14 @@ class CameraFragment : Fragment() {
                     // nothing needs to do here.
                 }
                 is VideoRecordEvent.Start -> {
-                    fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
-                    fragmentCameraBinding.captureButton.isEnabled = true
+                    //fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
+                    fragmentCameraBinding.captureButton.visibility = View.INVISIBLE
                     fragmentCameraBinding.stopButton.isEnabled = true
                     fragmentCameraBinding.previewcontainer?.setCardBackgroundColor(resources.getColor(R.color.redRecording))
                 }
                 is VideoRecordEvent.Finalize-> {
                     fragmentCameraBinding.previewcontainer?.setCardBackgroundColor(resources.getColor(R.color.yellowRecording))
-                    fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
+                    fragmentCameraBinding.captureButton.visibility = View.VISIBLE
                     fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
                 }
                 else -> {
@@ -279,7 +280,7 @@ class CameraFragment : Fragment() {
     private fun resetUIAndState() {
         lifecycleScope.launch(Dispatchers.Main) {
             enableUI(true)
-            fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
+            fragmentCameraBinding.captureButton.setImageResource(R.drawable.record)
             fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
             bindCaptureUsecase()
         }
