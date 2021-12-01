@@ -36,6 +36,8 @@ import java.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Surface.ROTATION_180
+import android.view.Surface.ROTATION_90
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
