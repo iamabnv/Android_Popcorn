@@ -23,6 +23,38 @@
     android:background="#000000">
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/audiocontainer"
+        android:layout_width="200dp"
+        android:layout_height="300dp"
+        android:visibility="invisible"
+        app:cardBackgroundColor="#FEC12F"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="8dp"
+        app:contentPadding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.2">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/outline_mic_24" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
         android:id="@+id/previewcontainer"
         android:layout_width="200dp"
         android:layout_height="300dp"
@@ -61,7 +93,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/previewcontainer"
+        app:layout_constraintTop_toBottomOf="@+id/audiocontainer"
         app:layout_constraintVertical_bias="0.6"
         tools:ignore="ImageContrastCheck" />
 
@@ -77,7 +109,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/previewcontainer"
+        app:layout_constraintTop_toBottomOf="@+id/audiocontainer"
         app:layout_constraintVertical_bias="0.6"
         tools:ignore="ImageContrastCheck" />
 
@@ -89,14 +121,14 @@
         android:text="popcorn"
         android:textColor="#FFFFFF"
         android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/previewcontainer"
+        app:layout_constraintBottom_toTopOf="@+id/audiocontainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.65" />
 
     <Button
-        android:id="@+id/filledTonalButton2"
+        android:id="@+id/camera.audio"
         style="@style/Widget.Material3.Button.TonalButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -108,10 +140,10 @@
         android:textColor="#847F76"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/filledTonalButton" />
+        app:layout_constraintStart_toEndOf="@+id/camera.video" />
 
     <Button
-        android:id="@+id/filledTonalButton"
+        android:id="@+id/camera.video"
         style="@style/Widget.Material3.Button.TonalButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -122,11 +154,12 @@
         android:text="Video"
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/filledTonalButton2"
+        app:layout_constraintEnd_toStartOf="@+id/camera.audio"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
         android:layout_width="325dp"
         android:layout_height="115dp"
         app:cardBackgroundColor="#2D2921"
@@ -134,7 +167,7 @@
         app:layout_constraintBottom_toTopOf="@+id/capture_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/previewcontainer"
+        app:layout_constraintTop_toBottomOf="@+id/audiocontainer"
         app:layout_constraintVertical_bias="0.3">
 
         <androidx.constraintlayout.widget.ConstraintLayout

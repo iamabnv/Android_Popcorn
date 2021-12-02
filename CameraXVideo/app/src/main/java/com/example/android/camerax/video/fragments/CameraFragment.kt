@@ -30,6 +30,7 @@ package com.example.android.camerax.video.fragments
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Color
 import android.icu.util.TimeUnit
 import android.net.Uri
 import java.text.SimpleDateFormat
@@ -58,6 +59,9 @@ import com.android.volley.AuthFailureError
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.bumptech.glide.Glide
+import com.bumptech.glide.annotation.GlideModule
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -67,6 +71,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 import java.io.UnsupportedEncodingException
+import java.net.URI
 import java.util.*
 import kotlin.time.seconds
 
@@ -79,6 +84,9 @@ class CameraFragment : Fragment() {
     private val fragmentCameraBinding get() = _fragmentCameraBinding!!
 
     private lateinit var userID : String
+
+    private lateinit var userPhotouri : Uri
+
 
     private lateinit var videoCapture: VideoCapture<Recorder>
     private var activeRecording: ActiveRecording? = null
@@ -219,6 +227,24 @@ class CameraFragment : Fragment() {
                 activeRecording = null
             }
         }
+
+        fragmentCameraBinding.cameraVideo?.setOnClickListener {
+            fragmentCameraBinding.imageView6?.setImageResource(R.drawable.outline_videocam_white_24)
+            fragmentCameraBinding.cameraVideo!!.setTextColor(Color.WHITE)
+            val colorr = resources.getColor(R.color.unselectedText)
+            fragmentCameraBinding.cameraAudio!!.setTextColor(colorr)
+            fragmentCameraBinding.previewcontainer?.visibility = View.VISIBLE
+            fragmentCameraBinding.audiocontainer?.visibility = View.INVISIBLE
+        }
+
+        fragmentCameraBinding.cameraAudio?.setOnClickListener {
+            fragmentCameraBinding.imageView6?.setImageResource(R.drawable.outline_mic_white_24)
+            val colorr = resources.getColor(R.color.unselectedText)
+            fragmentCameraBinding.cameraVideo!!.setTextColor(colorr)
+            fragmentCameraBinding.cameraAudio!!.setTextColor(Color.WHITE)
+            fragmentCameraBinding.previewcontainer?.visibility = View.INVISIBLE
+            fragmentCameraBinding.audiocontainer?.visibility = View.VISIBLE
+        }
     }
 
     /**
@@ -305,6 +331,14 @@ class CameraFragment : Fragment() {
             if(enumerationDeferred != null ) {
                 enumerationDeferred!!.await()
                 enumerationDeferred = null
+            }
+            val crntUser = FirebaseAuth.getInstance().currentUser
+            if (crntUser != null) {
+                userPhotouri = crntUser.photoUrl!!
+                Glide.with(requireContext())
+                    .load(userPhotouri)
+                    .into(fragmentCameraBinding.imageView!!)
+                //fragmentCameraBinding.imageView?.setImageURI(userPhotouri)
             }
             initializeUI()
             val auth = Firebase.auth
