@@ -7,39 +7,60 @@
     tools:context=".LoginFragment">
 
 
-    <Button
-        android:id="@+id/Login_SignIn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sign in with Google"
-        app:cornerRadius="30dp"
+    <ImageView
+        android:id="@+id/imageView7"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/loginbac"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
-        android:backgroundTint="#F11010"
-        android:clickable="true"
-        android:elevation="0dp"
-        app:fabSize="auto"
+    <Button
+        android:id="@+id/Login_SignIn"
+        style="@style/Widget.Material3.Button.ElevatedButton.Icon"
+        android:layout_width="250dp"
+        android:layout_height="80dp"
+        android:backgroundTint="#2F80ED"
+        android:fontFamily="@font/montserrat_alternates_bold"
+        android:text="Sign in with Google"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        app:cornerRadius="40dp"
+        app:icon="@drawable/good"
+        app:iconPadding="0dp"
+        app:iconTint="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Login_SignIn" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.69" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton2"
+    <ImageView
+        android:id="@+id/imageView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:clickable="true"
-        android:elevation="10dp"
+        android:src="@drawable/poppic"
+        app:layout_constraintBottom_toTopOf="@+id/Login_SignIn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.662" />
+
+    <ImageView
+        android:id="@+id/imageView5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/popop"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Login_SignIn" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.499" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
