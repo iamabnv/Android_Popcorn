@@ -19,21 +19,54 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#000000">
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/previewcontainer"
-        android:layout_width="225dp"
+        android:id="@+id/audiocontainer"
+        android:layout_width="200dp"
         android:layout_height="300dp"
-        app:cardBackgroundColor="@color/yellowRecording"
+        android:visibility="invisible"
+        app:cardBackgroundColor="#FEC12F"
         app:cardCornerRadius="32dp"
         app:cardElevation="8dp"
-        app:contentPadding="12dp"
+        app:contentPadding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.4">
+        app:layout_constraintVertical_bias="0.2">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/outline_mic_24" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/previewcontainer"
+        android:layout_width="200dp"
+        android:layout_height="300dp"
+        app:cardBackgroundColor="#FEC12F"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="8dp"
+        app:contentPadding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.2">
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -51,31 +84,33 @@
 
     <ImageButton
         android:id="@+id/capture_button"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
+        android:layout_width="108dp"
+        android:layout_height="108dp"
         android:layout_gravity="bottom|center"
-        android:background="@drawable/ic_start"
+        android:background="@drawable/record"
         android:contentDescription="@string/capture"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/previewcontainer"
+        app:layout_constraintTop_toBottomOf="@+id/audiocontainer"
+        app:layout_constraintVertical_bias="0.6"
         tools:ignore="ImageContrastCheck" />
 
     <ImageButton
         android:id="@+id/stop_button"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
+        android:layout_width="108dp"
+        android:layout_height="108dp"
         android:layout_gravity="bottom|right"
-        android:background="@drawable/ic_stop"
+        android:background="@drawable/stoprecord"
         android:contentDescription="@string/stop"
         android:scaleType="fitCenter"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/previewcontainer"
+        app:layout_constraintTop_toBottomOf="@+id/audiocontainer"
+        app:layout_constraintVertical_bias="0.6"
         tools:ignore="ImageContrastCheck" />
 
     <TextView
@@ -84,11 +119,105 @@
         android:layout_height="wrap_content"
         android:fontFamily="@font/montserrat_alternates_bold"
         android:text="popcorn"
+        android:textColor="#FFFFFF"
         android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/previewcontainer"
+        app:layout_constraintBottom_toTopOf="@+id/audiocontainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.8" />
+        app:layout_constraintVertical_bias="0.65" />
+
+    <Button
+        android:id="@+id/camera.audio"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="78dp"
+        android:layout_marginBottom="56dp"
+        android:backgroundTint="#2D2921"
+        android:fontFamily="@font/montserrat_alternates_bold"
+        android:text="Audio"
+        android:textColor="#847F76"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/camera.video" />
+
+    <Button
+        android:id="@+id/camera.video"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="78dp"
+        android:layout_marginBottom="56dp"
+        android:backgroundTint="#2D2921"
+        android:fontFamily="@font/montserrat_alternates_bold"
+        android:text="Video"
+        android:textColor="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/camera.audio"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
+        android:layout_width="325dp"
+        android:layout_height="115dp"
+        app:cardBackgroundColor="#2D2921"
+        app:cardCornerRadius="32dp"
+        app:layout_constraintBottom_toTopOf="@+id/capture_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/audiocontainer"
+        app:layout_constraintVertical_bias="0.3">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/imageView6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    app:srcCompat="@drawable/outline_videocam_white_24" />
+
+                <TextView
+                    android:id="@+id/textView3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:fontFamily="@font/montserrat_alternates_bold"
+                    android:text="message"
+                    android:textColor="#847F76"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textView6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/montserrat_alternates_bold"
+                android:gravity="center"
+                android:text="Tap the record button to record a\nnew message."
+                android:textAllCaps="false"
+                android:textColor="#847F76"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

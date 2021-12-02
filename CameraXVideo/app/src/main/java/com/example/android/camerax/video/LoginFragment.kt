@@ -61,6 +61,7 @@ class LoginFragment : Fragment() {
         super.onStart()
         val crntUser = auth.currentUser
         if (crntUser != null) {
+            Log.w(TAG, crntUser.photoUrl.toString())
             volleyPost(crntUser)
         }
         loginView.findViewById<Button>(R.id.Login_SignIn).setOnClickListener {

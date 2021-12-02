@@ -30,8 +30,10 @@ package com.example.android.camerax.video.fragments
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.icu.util.TimeUnit
+import android.graphics.Color
+import android.media.MediaRecorder
 import android.net.Uri
+import android.os.Build
 import java.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
@@ -39,6 +41,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.camera.core.AspectRatio
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -50,13 +53,15 @@ import androidx.camera.core.Preview
 import androidx.camera.video.*
 import androidx.concurrent.futures.await
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.util.Consumer
 import androidx.navigation.fragment.navArgs
 import com.android.volley.AuthFailureError
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
-import com.google.firebase.auth.FirebaseUser
+import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
@@ -66,7 +71,6 @@ import org.json.JSONObject
 import java.io.File
 import java.io.UnsupportedEncodingException
 import java.util.*
-import kotlin.time.seconds
 
 class CameraFragment : Fragment() {
 
@@ -77,6 +81,16 @@ class CameraFragment : Fragment() {
     private val fragmentCameraBinding get() = _fragmentCameraBinding!!
 
     private lateinit var userID : String
+
+    private lateinit var userPhotouri : Uri
+
+    private lateinit var audioMediaRecorder : MediaRecorder
+
+    private var finalRecordState : Boolean = false
+
+    private var isAudio : Boolean = false
+
+    private lateinit var audioOutputFile : File
 
     private lateinit var videoCapture: VideoCapture<Recorder>
     private var activeRecording: ActiveRecording? = null
@@ -160,6 +174,23 @@ class CameraFragment : Fragment() {
         Log.i(TAG, "Recording started")
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun audioStartRecording() {
+        val name = "AudioRecording" +
+                SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+                    .format(System.currentTimeMillis()) + "-raw.mp3"
+        audioOutputFile = File(requireContext().getExternalFilesDir(null), name)
+        audioMediaRecorder.setOutputFile(audioOutputFile)
+        audioMediaRecorder.prepare()
+        audioMediaRecorder.start()
+    }
+
+    private fun audioStopRecording() {
+        audioMediaRecorder.stop()
+        audioMediaRecorder.release()
+        uploadVideo(audioOutputFile.toUri(), true)
+    }
+
     /**
      * CaptureEvent listener.
      */
@@ -171,16 +202,21 @@ class CameraFragment : Fragment() {
         updateUI(event)
 
         if (event is VideoRecordEvent.Finalize) {
-            uploadVideo(event.outputResults.outputUri)
+            fragmentCameraBinding.textView2?.text = "popcorn"
+            uploadVideo(event.outputResults.outputUri, false)
         }
     }
 
-    private fun uploadVideo(videoURI : Uri) {
-        val uploadReference = "videos/"+userID+"/"+System.currentTimeMillis()+"-raw.mp4"
+    private fun uploadVideo(videoURI : Uri, isAudio : Boolean) {
+        val uploadReference: String = if (isAudio) {
+            "videos/"+userID+"/"+System.currentTimeMillis()+"-raw.mp3"
+        } else {
+            "videos/"+userID+"/"+System.currentTimeMillis()+"-raw.mp4"
+        }
         val storageReference = FirebaseStorage.getInstance()
             .getReference(uploadReference)
         storageReference.putFile(videoURI).addOnCompleteListener {
-            getVidLink(uploadReference)
+            getVidLink(uploadReference, isAudio)
             Toast.makeText(requireContext(),
                 "uploaded video to firebase", Toast.LENGTH_SHORT).show()
         }
@@ -191,30 +227,70 @@ class CameraFragment : Fragment() {
      * Note that preview and capture are both initialized either by UI or CameraX callbacks
      * (only except the very 1st time upon entering to this fragment in onViewCreated()
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("ClickableViewAccessibility", "MissingPermission")
     private fun initializeUI() {
-        // React to user touching the capture button
         fragmentCameraBinding.captureButton.setOnClickListener {
-            if (!this::recordingState.isInitialized || recordingState is VideoRecordEvent.Finalize) {
-                fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
+            finalRecordState = isAudio
+            fragmentCameraBinding.cameraVideo?.isEnabled = false
+            fragmentCameraBinding.cameraAudio?.isEnabled = false
+            if (!finalRecordState) {
+                if (!this::recordingState.isInitialized || recordingState is VideoRecordEvent.Finalize) {
+                    fragmentCameraBinding.stopButton.visibility = View.VISIBLE
+                    fragmentCameraBinding.captureButton.visibility = View.INVISIBLE
+                    startRecording()
+                }
+            }
+            else {
                 fragmentCameraBinding.stopButton.visibility = View.VISIBLE
-                enableUI(false)
-                startRecording()
+                fragmentCameraBinding.captureButton.visibility = View.INVISIBLE
+                audioStartRecording()
             }
         }
         fragmentCameraBinding.stopButton.setOnClickListener {
             // stopping
+            fragmentCameraBinding.captureButton.visibility = View.VISIBLE
             fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
-            if (activeRecording == null || recordingState is VideoRecordEvent.Finalize) {
-                return@setOnClickListener
+            fragmentCameraBinding.cameraVideo?.isEnabled = true
+            fragmentCameraBinding.cameraAudio?.isEnabled = true
+            if (!finalRecordState) {
+                if (activeRecording == null || recordingState is VideoRecordEvent.Finalize) {
+                    return@setOnClickListener
+                }
+                val recording = activeRecording
+                if (recording != null) {
+                    recording.stop()
+                    activeRecording = null
+                }
             }
+            else {
+                audioStopRecording()
+            }
+        }
 
-            val recording = activeRecording
-            if (recording != null) {
-                recording.stop()
-                activeRecording = null
-            }
-            fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
+        audioMediaRecorder = MediaRecorder()
+        audioMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+        audioMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+        audioMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+
+        fragmentCameraBinding.cameraVideo?.setOnClickListener {
+            fragmentCameraBinding.imageView6?.setImageResource(R.drawable.outline_videocam_white_24)
+            fragmentCameraBinding.cameraVideo!!.setTextColor(Color.WHITE)
+            val colorr = resources.getColor(R.color.unselectedText)
+            fragmentCameraBinding.cameraAudio!!.setTextColor(colorr)
+            fragmentCameraBinding.previewcontainer?.visibility = View.VISIBLE
+            fragmentCameraBinding.audiocontainer?.visibility = View.INVISIBLE
+            isAudio = false
+        }
+
+        fragmentCameraBinding.cameraAudio?.setOnClickListener {
+            fragmentCameraBinding.imageView6?.setImageResource(R.drawable.outline_mic_white_24)
+            val colorr = resources.getColor(R.color.unselectedText)
+            fragmentCameraBinding.cameraVideo!!.setTextColor(colorr)
+            fragmentCameraBinding.cameraAudio!!.setTextColor(Color.WHITE)
+            fragmentCameraBinding.previewcontainer?.visibility = View.INVISIBLE
+            fragmentCameraBinding.audiocontainer?.visibility = View.VISIBLE
+            isAudio = true
         }
     }
 
@@ -237,14 +313,14 @@ class CameraFragment : Fragment() {
                     // nothing needs to do here.
                 }
                 is VideoRecordEvent.Start -> {
-                    fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
-                    fragmentCameraBinding.captureButton.isEnabled = true
+                    //fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_pause)
+                    fragmentCameraBinding.captureButton.visibility = View.INVISIBLE
                     fragmentCameraBinding.stopButton.isEnabled = true
                     fragmentCameraBinding.previewcontainer?.setCardBackgroundColor(resources.getColor(R.color.redRecording))
                 }
                 is VideoRecordEvent.Finalize-> {
                     fragmentCameraBinding.previewcontainer?.setCardBackgroundColor(resources.getColor(R.color.yellowRecording))
-                    fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
+                    fragmentCameraBinding.captureButton.visibility = View.VISIBLE
                     fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
                 }
                 else -> {
@@ -261,16 +337,6 @@ class CameraFragment : Fragment() {
     }
 
     /**
-     * Enable/disable UI:
-     *    User could select the capture parameters when recording is not in session
-     *    Once recording is started, need to disable able UI to avoid conflict.
-     */
-    private fun enableUI(enable: Boolean) {
-        fragmentCameraBinding.captureButton.isEnabled = enable
-        fragmentCameraBinding.stopButton.isEnabled = enable
-    }
-
-    /**
      * ResetUI (restart):
      *    in case binding failed, let's give it another change for re-try. In future cases
      *    we might fail and user get notified on the status
@@ -278,8 +344,7 @@ class CameraFragment : Fragment() {
     @SuppressLint("SetTextI18n")
     private fun resetUIAndState() {
         lifecycleScope.launch(Dispatchers.Main) {
-            enableUI(true)
-            fragmentCameraBinding.captureButton.setImageResource(R.drawable.ic_start)
+            fragmentCameraBinding.captureButton.visibility = View.VISIBLE
             fragmentCameraBinding.stopButton.visibility = View.INVISIBLE
             bindCaptureUsecase()
         }
@@ -296,12 +361,21 @@ class CameraFragment : Fragment() {
     }
 
     // system functions starts
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch(Dispatchers.Main) {
             if(enumerationDeferred != null ) {
                 enumerationDeferred!!.await()
                 enumerationDeferred = null
+            }
+            val crntUser = FirebaseAuth.getInstance().currentUser
+            if (crntUser != null) {
+                userPhotouri = crntUser.photoUrl!!
+                Glide.with(requireContext())
+                    .load(userPhotouri)
+                    .into(fragmentCameraBinding.imageView!!)
+                //fragmentCameraBinding.imageView?.setImageURI(userPhotouri)
             }
             initializeUI()
             val auth = Firebase.auth
@@ -312,13 +386,18 @@ class CameraFragment : Fragment() {
         }
     }
 
-    private fun getVidLink(path : String) {
+    private fun getVidLink(path: String, isAudio: Boolean) {
         val postUrl = "https://api.popcornmeet.com/v1/messages"
         val requestQueue = Volley.newRequestQueue(context)
         val postData = JSONObject()
         try {
             postData.put("path", path)
-            postData.put("mode", "camera")
+            if (isAudio) {
+                postData.put("mode", "microphone")
+            }
+            else {
+                postData.put("mode", "camera")
+            }
         } catch (e: JSONException) {
             e.printStackTrace()
         }
