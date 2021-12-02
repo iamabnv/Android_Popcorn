@@ -202,6 +202,7 @@ class CameraFragment : Fragment() {
         updateUI(event)
 
         if (event is VideoRecordEvent.Finalize) {
+            fragmentCameraBinding.textView2?.text = "popcorn"
             uploadVideo(event.outputResults.outputUri, false)
         }
     }
